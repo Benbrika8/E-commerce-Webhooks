@@ -215,7 +215,7 @@ MIT License - See [LICENSE](LICENSE) file
 N8N Automation Specialist | Workflow Developer
 
 📧 Email: salahbenbrika2@gmail.com  
-💼 GitHub: [@yourusername](https://github.com/yourusername)
+💼 GitHub: [@Benbrika8](https://github.com/Benbrika8)
 
 ---
 
