@@ -1,0 +1,387 @@
+{
+  "name": "E-commerce Webhooks",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "shopify-order",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "7d0bb151-aecb-4d55-9667-c1821cb406e8",
+      "name": "Webhook",
+      "webhookId": "365dc43d-c127-40c2-b167-a39d6e516bf0"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "e1a90482-3fcd-4620-8a3e-6953cb000a40",
+              "name": "order_id",
+              "value": "={{ $json.body.id }}",
+              "type": "string"
+            },
+            {
+              "id": "0e000a08-95cc-4cbd-b730-38bfa8c983bc",
+              "name": "order_number",
+              "value": "={{ $json.body.order_number }}",
+              "type": "string"
+            },
+            {
+              "id": "a6dddbda-616f-485c-bbc4-192c4561298b",
+              "name": "customer_name",
+              "value": "={{ $json.body.customer.first_name }} {{ $json.body.customer.last_name }}",
+              "type": "string"
+            },
+            {
+              "id": "a3ddbbf9-7393-4394-a649-978dbb17042a",
+              "name": "customer_email",
+              "value": "={{ $json.body.customer.email }}",
+              "type": "string"
+            },
+            {
+              "id": "02318a4b-6be3-4855-bde8-0ad9dff60ca1",
+              "name": "customer_phone",
+              "value": "={{ $json.body.customer.phone }}",
+              "type": "string"
+            },
+            {
+              "id": "554471e3-787e-4c8f-8123-567e5f85ee12",
+              "name": "total_price",
+              "value": "={{ $json.body.total_price }}",
+              "type": "string"
+            },
+            {
+              "id": "c864e6af-8833-4bb5-8dc9-18e0185d70a8",
+              "name": "currency",
+              "value": "={{ $json.body.currency }}",
+              "type": "string"
+            },
+            {
+              "id": "8591ee9b-778c-4121-a118-13f0c19d0032",
+              "name": "items",
+              "value": "={{ $json.body.line_items }}",
+              "type": "string"
+            },
+            {
+              "id": "f9a9c157-bbb8-4c14-ab30-51c434f2350f",
+              "name": "shipping_address",
+              "value": "={{ $json.body.shipping_address.address1 }}",
+              "type": "string"
+            },
+            {
+              "id": "9403899a-19c4-4de3-af4f-e52d35a858a5",
+              "name": "city",
+              "value": "={{ $json.body.shipping_address.city }}",
+              "type": "string"
+            },
+            {
+              "id": "83f27e93-c46c-4d71-a903-1516387b0d0d",
+              "name": "country",
+              "value": "={{ $json.body.shipping_address.country }}",
+              "type": "string"
+            },
+            {
+              "id": "b76488e9-d7a0-466d-999a-7c8ea091f1c6",
+              "name": "created_at",
+              "value": "={{ $json.body.created_at }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        208,
+        0
+      ],
+      "id": "d70f4ef3-4bb9-4e8c-9f55-1215f69143b4",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "// ============================================\n// SHOPIFY ORDER PROCESSOR (ENHANCED)\n// ============================================\n\n// 1. Safe Data Extraction\n// We use '||' to provide default values if data is missing, preventing crashes.\nconst orderId = $json.order_id || 'N/A';\nconst orderNumber = $json.order_number || 'N/A';\nconst customerName = $json.customer_name || 'Valued Customer';\nconst customerEmail = $json.customer_email || 'No Email Provided';\nconst totalPrice = $json.total_price || '0.00';\nconst currency = $json.currency || 'USD';\nconst customerPhone = $json.customer_phone || '';\n\n// 2. Process Line Items (Fixes \"items is not iterable\" error)\n// Default to empty array [] if items are missing\nconst lineItems = $json.items || [];\n\nlet itemsSummary = '';\nlet totalItems = 0;\n\n// Check if lineItems is actually an array before looping\nif (Array.isArray(lineItems) && lineItems.length > 0) {\n  \n  lineItems.forEach(item => {\n    const title = item.title || 'Unknown Product';\n    const quantity = item.quantity || 0;\n    const price = item.price || '0.00';\n\n    itemsSummary += `\n      <tr>\n        <td style=\"padding: 10px; border-bottom: 1px solid #eee;\">\n          ${title}\n        </td>\n        <td style=\"padding: 10px; border-bottom: 1px solid #eee; text-align: center;\">\n          ${quantity}\n        </td>\n        <td style=\"padding: 10px; border-bottom: 1px solid #eee;\">\n          ${currency} ${price}\n        </td>\n      </tr>\n    `;\n    totalItems += quantity;\n  });\n\n} else {\n  // Fallback HTML if no items are found\n  itemsSummary = '<tr><td colspan=\"3\" style=\"padding: 10px;\">No items found in this order.</td></tr>';\n}\n\n// 3. Build Shipping Address safely\nconst address1 = $json.shipping_address || '';\nconst city = $json.city || '';\nconst country = $json.country || '';\n\n// Combine and clean up commas if fields are empty\nlet fullAddress = `${address1} ${city} ${country}`.trim();\nif (fullAddress === '') fullAddress = 'No Shipping Address Provided';\n\n// 4. Return Processed Data\nreturn {\n  order_id: orderId,\n  order_number: orderNumber,\n  customer_name: customerName,\n  customer_email: customerEmail,\n  customer_phone: customerPhone,\n  total_price: totalPrice,\n  currency: currency,\n  items_html: itemsSummary,    // Use this in your Gmail node\n  total_items: totalItems,\n  shipping_address: fullAddress,\n  created_at: $json.created_at || new Date().toISOString(),\n  processed_at: new Date().toISOString()\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        416,
+        0
+      ],
+      "id": "7a2109e4-9439-4e73-8ba8-bf08182907d6",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $json.customer_email }}",
+        "subject": "=Order Confirmed  {{ $json.order_number }}",
+        "message": "=<!DOCTYPE html> <html> <body style=\"font-family: Arial; padding: 20px; background: #f5f5f5;\">   <div style=\"background: white; padding: 30px; border-radius: 10px;               border-left: 5px solid #2ecc71; max-width: 600px;\">      <h2 style=\"color: #2ecc71;\">✅ Order Confirmed!</h2>      <p>Dear <strong>{{ $json.customer_name }}</strong>,</p>      <p>Thank you for your order! We've received your purchase and         are processing it now.</p>      <div style=\"background: #f8f9fa; padding: 20px; border-radius: 8px;                 margin: 20px 0;\">       <h3 style=\"margin-top: 0;\">Order Details</h3>       <p><strong>Order Number:</strong> #{{ $json.order_number }}</p>       <p><strong>Order Date:</strong> {{ $json.created_at }}</p>       <p><strong>Total:</strong> {{ $json.currency }} {{ $json.total_price }}</p>     </div>      <h3>Items Ordered:</h3>     <table style=\"width: 100%; border-collapse: collapse;\">       <thead>         <tr style=\"background: #f0f0f0;\">           <th style=\"padding: 10px; text-align: left;\">Product</th>           <th style=\"padding: 10px; text-align: left;\">Qty</th>           <th style=\"padding: 10px; text-align: left;\">Price</th>         </tr>       </thead>       <tbody>         {{ $json.items_html }}       </tbody>     </table>      <div style=\"background: #fff3cd; padding: 15px; border-radius: 8px;                 margin: 20px 0;\">       <strong>📦 Shipping Address:</strong><br>       {{ $json.shipping_address }}     </div>      <p>You'll receive another email once your order ships.</p>      <p>Best regards,<br><strong>Store Team</strong></p>   </div> </body> </html>",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        768,
+        -16
+      ],
+      "id": "0206c923-07af-4387-b671-0acc7f397328",
+      "name": "Send a message",
+      "webhookId": "a1d139ff-5962-4a12-8e46-ad0f91ebd1cc",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "aq7MAWsIPK1aaZfx",
+          "name": "Gmail account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "5094673062",
+        "text": "=*New Order Received!*\nOrder: #{{ $json.order_number }}\nCustomer: {{ $json.customer_name }}\nEmail: {{ $json.customer_email }}\nPhone: {{ $json.customer_phone }}\nTotal: {{ $json.currency }} {{ $json.total_price }}\nItems: {{ $json.total_items }}\nShip to: {{ $json.shipping_address }}\n{{ $json.created_at }}\n",
+        "additionalFields": {
+          "parse_mode": "Markdown"
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        768,
+        -160
+      ],
+      "id": "e620725a-e61d-4fe8-b8b9-a858891ba080",
+      "name": "Send a text message",
+      "webhookId": "3502d0eb-d28d-4275-9db6-c156a77481c0",
+      "credentials": {
+        "telegramApi": {
+          "id": "yUjJaYlhHWTB1jUJ",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1mG8hfnA0U5I0oH7H92HI-ZPjGALTpFxwtd2eB7vnjCg",
+          "mode": "list",
+          "cachedResultName": "Shopify Automation",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1mG8hfnA0U5I0oH7H92HI-ZPjGALTpFxwtd2eB7vnjCg/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Orders Log",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1mG8hfnA0U5I0oH7H92HI-ZPjGALTpFxwtd2eB7vnjCg/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Order ID": "={{ $json.order_id }}",
+            "Order Number": "={{ $json.order_number }}",
+            "Customer Name": "={{ $json.customer_name }}",
+            "Email": "={{ $json.customer_email }}",
+            "Costumer phone": "={{ $json.customer_phone }}",
+            "Total Price": "={{ $json.total_price }}",
+            "Shipping Adress": "={{ $json.shipping_address }}",
+            "Items Count": "={{ $json.total_items }}",
+            "Date": "={{ $json.created_at }}",
+            "Status": "Processing"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Order ID",
+              "displayName": "Order ID",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Order Number",
+              "displayName": "Order Number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Customer Name",
+              "displayName": "Customer Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Email",
+              "displayName": "Email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Costumer phone",
+              "displayName": "Costumer phone",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Shipping Adress",
+              "displayName": "Shipping Adress",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Total Price",
+              "displayName": "Total Price",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Items Count",
+              "displayName": "Items Count",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Date",
+              "displayName": "Date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Status",
+              "displayName": "Status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        768,
+        144
+      ],
+      "id": "34ccd29b-16d9-49c3-b235-7e3ad179206b",
+      "name": "Append row in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "REnahpjglZM00qJh",
+          "name": "Google Sheets account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "Send a text message",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Append row in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send a text message": {
+      "main": [
+        []
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "dc7a5eb7-4375-4e7b-a0c9-87b24cf43117",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "550b66e40becd23f3d30e9bb670a52fede4fe6ad8e8b5fe6d61fdc289194de81"
+  },
+  "id": "ks9RfdYCSCeNaaLl",
+  "tags": []
+}
