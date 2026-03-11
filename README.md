@@ -203,6 +203,38 @@ if (Array.isArray(lineItems) && lineItems.length > 0) {
 
 ---
 
+## 🖼️ Screenshots & Demo
+
+Real workflow execution screenshots showing the complete automation pipeline in action.
+
+### 1. Workflow Overview + Webhook Payload
+> N8N workflow editor showing the complete pipeline alongside a live Shopify order JSON payload being tested.
+
+![Webhook Payload and Workflow Overview](screenshots/01-webhook-payload-and-workflow-overview.png)
+
+---
+
+### 2. N8N Full Workflow Architecture
+> Complete view of all 5 nodes: Webhook → Edit Fields → Code in JavaScript → Telegram + Gmail + Google Sheets.
+
+![N8N Full Workflow Overview](screenshots/03-n8n-workflow-full-overview.png)
+
+---
+
+### 3. Successful Workflow Execution + Google Sheets Output
+> Live execution result showing all nodes completed successfully in 11.895s with real order data logged to Google Sheets.
+
+![Workflow Execution Success](screenshots/04-workflow-execution-success-google-sheets-output.png)
+
+---
+
+### 4. Automated Gmail Order Confirmation Email
+> Auto-generated HTML email sent to the customer immediately after order placement, including order details and shipping address.
+
+![Gmail Order Confirmation Email](screenshots/02-gmail-order-confirmation-email.png)
+
+---
+
 ## 📝 License
 
 MIT License - See [LICENSE](LICENSE) file
