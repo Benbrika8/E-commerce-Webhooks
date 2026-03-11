@@ -235,6 +235,15 @@ Real workflow execution screenshots showing the complete automation pipeline in 
 
 ---
 
+### 🎬 Live Demo Video
+> Full end-to-end demonstration: sending a Shopify order webhook → N8N processes it → Gmail email sent → Telegram alert triggered → Google Sheets updated in real-time.
+
+[![E-commerce Webhook Demo](screenshots/00-demo-thumbnail.png)](demos/ecommerce-webhook-full-demo.mp4)
+
+> **Note:** Download the video file from the `demos/` folder to watch the full workflow in action.
+
+---
+
 ## 📝 License
 
 MIT License - See [LICENSE](LICENSE) file
