@@ -5,6 +5,11 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Shopify](https://img.shields.io/badge/Shopify-Compatible-7AB55C?logo=shopify&logoColor=white)](https://www.shopify.com)
 
+## 🖼️ Workflow Preview
+
+![Workflow Preview](workflow-preview.svg)
+
+
 ## 📋 Overview
 
 Professional N8N workflow automation that processes Shopify orders in real-time and sends multi-channel notifications instantly. Built for e-commerce businesses that need automated order management with zero manual intervention.
